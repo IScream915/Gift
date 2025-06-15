@@ -1,6 +1,10 @@
 package lottery
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"sort"
+)
 
 // Lottery 抽奖函数
 // 入参: 抽奖物品的库存量
@@ -18,10 +22,19 @@ func Lottery(items []int) int {
 		acc = append(acc, sum)
 	}
 	fmt.Println(acc)
-	return 0
+
+	r := rand.Float64() * float64(sum) // r 在[0, sum) 之间随机取得
+
+	return BinarySearch(acc, r)
 }
 
 // BinarySearch 采用二分查找快速取得抽中的物品的编号
-func BinarySearch(arr []float64, target float64) int {
-	return 0
+func BinarySearch(arr []int, target float64) int {
+	idx := sort.Search(len(arr), func(i int) bool {
+		return float64(arr[i]) >= target
+	})
+	if idx == len(arr) {
+		return idx - 1
+	}
+	return idx
 }
