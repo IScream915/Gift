@@ -1,6 +1,7 @@
 package mysqlutil
 
 import (
+	"context"
 	"fmt"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -23,7 +24,7 @@ type Config struct {
 	LogLevel     string `mapstructure:"log_level"`
 }
 
-func NewMysqlClient() (*gorm.DB, error) {
+func NewMysqlClient(ctx context.Context) (*gorm.DB, error) {
 	config := &Config{}
 
 	// 载入dbconfig
@@ -108,15 +109,6 @@ func repairClient(c *Config) {
 func loadDbConfig(c *Config) error {
 	// 读取文件内容
 	configPath := DefaultDbConfigPath
-
-	//dbconfig, err := os.ReadFile(configPath)
-	//if err != nil {
-	//	log.Fatalln("读取dbconfig失败: ", err)
-	//}
-	//
-	//if err = yaml.Unmarshal(dbconfig, c); err != nil {
-	//	log.Fatalln("解析 dbconfig.yaml 失败: ", err)
-	//}
 
 	// 使用 Viper 加载配置文件
 	viper.SetConfigFile(configPath)
