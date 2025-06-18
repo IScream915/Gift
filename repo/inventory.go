@@ -12,6 +12,7 @@ type Inventory interface {
 	DeleteByIds(ctx context.Context, ids []uint64) error
 	FindById(ctx context.Context, id uint64) (*models.Inventory, error)
 	FindAll(ctx context.Context) ([]*models.Inventory, error)
+	FindInventoryList(ctx context.Context, opts ...InventoryQueryFunc) ([]*models.Inventory, uint64, error)
 	Transaction(ctx context.Context, fn func(tx *gorm.DB) error) error
 	WithTx(tx *gorm.DB) Inventory
 }

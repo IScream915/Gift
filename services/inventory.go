@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"gift/assemble"
 	"gift/dto"
 	"gift/repo"
 	"gift/repo/models"
@@ -12,6 +13,7 @@ type Inventory interface {
 	Create(ctx context.Context, req *dto.CreateInventoryReq) error
 	Update(ctx context.Context, req *dto.UpdateInventoryReq) error
 	Delete(ctx context.Context, req *dto.DeleteInventoryReq) error
+	GetInventories(ctx context.Context, req *dto.GetInventoriesReq) (*dto.GetInventoriesResp, error)
 }
 
 func NewInventory(repo repo.Inventory) Inventory {
@@ -79,4 +81,30 @@ func (obj *inventory) Delete(ctx context.Context, req *dto.DeleteInventoryReq) e
 		return txErr
 	}
 	return nil
+}
+
+func (obj *inventory) GetInventories(ctx context.Context, req *dto.GetInventoriesReq) (*dto.GetInventoriesResp, error) {
+	list, total, err := obj.repo.FindInventoryList(ctx,
+		repo.WithName(req.Name),
+		repo.WithDesc(req.Description),
+		repo.WithPrice(req.Price),
+		repo.WithCount(req.Count),
+		repo.WithPagination(int(req.Page), int(req.PageSize)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	inventoryList := assemble.Model2Info(list)
+
+	resp := &dto.GetInventoriesResp{
+		InventoryList: inventoryList,
+		Pagination: dto.Pagination{
+			Page:     req.Page,
+			PageSize: req.PageSize,
+			Total:    int(total),
+		},
+	}
+
+	return resp, nil
 }
