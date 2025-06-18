@@ -1,5 +1,14 @@
 package dto
 
+type InventoryInfo struct {
+	ID          uint64 `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Price       uint64 `json:"price"`
+	Count       uint64 `json:"count"`
+	CreatedAt   uint64 `json:"created_at"`
+	UpdatedAt   uint64 `json:"updated_at"`
+}
 type CreateInventoryReq struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
@@ -18,4 +27,17 @@ type UpdateInventoryReq struct {
 
 type DeleteInventoryReq struct {
 	ID uint64 `json:"id" binding:"required"`
+}
+
+type GetInventoriesReq struct {
+	Name        string `form:"name"`        // 物品名称
+	Description string `form:"description"` // 物品描述
+	Price       uint64 `form:"price"`       // 物品价格
+	Count       uint64 `form:"count"`       // 物品库存
+	Pagination         // 分页需求
+}
+
+type GetInventoriesResp struct {
+	InventoryList []*InventoryInfo `json:"inventory_list"`
+	Pagination    Pagination       `json:"pagination"`
 }
