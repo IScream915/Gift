@@ -11,6 +11,8 @@ type Inventory interface {
 	Create(c *gin.Context)
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
+	Get(c *gin.Context)
+	Load(c *gin.Context)
 }
 
 func NewInventory(svc services.Inventory) Inventory {
@@ -69,4 +71,26 @@ func (obj *inventory) Delete(c *gin.Context) {
 	}
 
 	response.Json(c, response.WithMsg("delete inventory success"))
+}
+
+func (obj *inventory) Get(c *gin.Context) {
+	req := &dto.GetInventoriesReq{}
+
+	if err := c.ShouldBindQuery(req); err != nil {
+		response.Json(c, response.WithErr(err))
+		return
+	}
+
+	resp, err := obj.svc.GetInventories(c, req)
+	if err != nil {
+		response.Json(c, response.WithErr(err))
+		return
+	}
+
+	response.Json(c, response.WithData(resp))
+}
+
+func (obj *inventory) Load(c *gin.Context) {
+	//TODO implement me
+	panic("implement me")
 }
