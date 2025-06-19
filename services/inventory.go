@@ -4,6 +4,7 @@ import (
 	"context"
 	"gift/assemble"
 	"gift/dto"
+	"gift/pkg/gormutil"
 	"gift/repo"
 	"gift/repo/models"
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ type Inventory interface {
 	Update(ctx context.Context, req *dto.UpdateInventoryReq) error
 	Delete(ctx context.Context, req *dto.DeleteInventoryReq) error
 	GetInventories(ctx context.Context, req *dto.GetInventoriesReq) (*dto.GetInventoriesResp, error)
+	LoadInventories(ctx context.Context) error
 }
 
 func NewInventory(repo repo.Inventory) Inventory {
@@ -49,7 +51,11 @@ func (obj *inventory) Create(ctx context.Context, req *dto.CreateInventoryReq) e
 }
 
 func (obj *inventory) Update(ctx context.Context, req *dto.UpdateInventoryReq) error {
+	baseModel := models.BaseModel{
+		ID: req.ID,
+	}
 	newInventory := &models.Inventory{
+		BaseModel:   baseModel,
 		Name:        req.Name,
 		Description: req.Description,
 		Picture:     req.Picture,
@@ -89,7 +95,7 @@ func (obj *inventory) GetInventories(ctx context.Context, req *dto.GetInventorie
 		repo.WithDesc(req.Description),
 		repo.WithPrice(req.Price),
 		repo.WithCount(req.Count),
-		repo.WithPagination(int(req.Page), int(req.PageSize)),
+		repo.WithPagination(req.Page, req.PageSize),
 	)
 	if err != nil {
 		return nil, err
@@ -97,14 +103,21 @@ func (obj *inventory) GetInventories(ctx context.Context, req *dto.GetInventorie
 
 	inventoryList := assemble.Model2Info(list)
 
+	page, pageSize := gormutil.RepairPaging(req.Page, req.PageSize)
 	resp := &dto.GetInventoriesResp{
 		InventoryList: inventoryList,
 		Pagination: dto.Pagination{
-			Page:     req.Page,
-			PageSize: req.PageSize,
+			Page:     page,
+			PageSize: pageSize,
 			Total:    int(total),
 		},
 	}
 
 	return resp, nil
+}
+
+// LoadInventories 数据预热, 将物品数据从mysql中载入redis中, 为之后的高并发需求做准备
+func (obj *inventory) LoadInventories(ctx context.Context) error {
+	//TODO implement me
+	panic("implement me")
 }
