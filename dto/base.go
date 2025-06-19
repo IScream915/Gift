@@ -1,7 +1,7 @@
 package dto
 
 type Pagination struct {
-	Page     uint64 `form:"page" json:"page" binding:"required"`           // 页码
-	PageSize uint64 `form:"page_size" json:"page_size" binding:"required"` // 每页大小
-	Total    int    `json:"count"`                                         // 总数
+	Page     int `form:"page" json:"page"`           // 页码
+	PageSize int `form:"page_size" json:"page_size"` // 每页大小
+	Total    int `json:"count"`                      // 总数
 }
