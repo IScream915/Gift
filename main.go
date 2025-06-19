@@ -22,6 +22,8 @@ func SetRoute(router gin.IRouter, inventoryApi api.Inventory) {
 			inventoryNotLogin.POST("/create", inventoryApi.Create) // 增加新物品
 			inventoryNotLogin.POST("/update", inventoryApi.Update) // 更新物品信息
 			inventoryNotLogin.POST("/delete", inventoryApi.Delete) // 删除物品
+			inventoryNotLogin.GET("/get", inventoryApi.Get)        // 获取物品
+			inventoryNotLogin.GET("/load", inventoryApi.Load)      // 数据预热
 		}
 	}
 }
@@ -68,7 +70,7 @@ func main() {
 		log.Fatalln("redis连接失败", err)
 	}
 
-	fmt.Println("Redis初始化成功")
+	fmt.Println("Redis初始化成功", rds)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// -> rds全局redis数据库
 
