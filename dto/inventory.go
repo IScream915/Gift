@@ -4,20 +4,22 @@ type InventoryInfo struct {
 	ID          uint64 `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Picture     string `json:"picture"`
 	Price       uint64 `json:"price"`
 	Count       uint64 `json:"count"`
 	CreatedAt   uint64 `json:"created_at"`
 	UpdatedAt   uint64 `json:"updated_at"`
 }
 type CreateInventoryReq struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	Picture     string `json:"picture" binding:"required"`
-	Price       uint64 `json:"price" binding:"required"`
-	Count       uint64 `json:"count" binding:"required"`
+	Name        string `json:"name" binding:"required"`    // 物品名称
+	Description string `json:"description"`                // 物品描述
+	Picture     string `json:"picture" binding:"required"` // 物品图片路径
+	Price       uint64 `json:"price" binding:"required"`   // 物品价格
+	Count       uint64 `json:"count" binding:"required"`   // 物品库存
 }
 
 type UpdateInventoryReq struct {
+	ID          uint64 `json:"id" binding:"required"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Picture     string `json:"picture"`
