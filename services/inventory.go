@@ -8,6 +8,7 @@ import (
 	"gift/repo"
 	"gift/repo/models"
 	"gorm.io/gorm"
+	"sync"
 )
 
 type Inventory interface {
@@ -18,14 +19,16 @@ type Inventory interface {
 	LoadInventories(ctx context.Context) error
 }
 
-func NewInventory(repo repo.Inventory) Inventory {
+func NewInventory(repo repo.Inventory, rdsRepo repo.InventoryRds) Inventory {
 	return &inventory{
-		repo: repo,
+		repo:    repo,
+		rdsRepo: rdsRepo,
 	}
 }
 
 type inventory struct {
-	repo repo.Inventory
+	repo    repo.Inventory
+	rdsRepo repo.InventoryRds
 }
 
 func (obj *inventory) Create(ctx context.Context, req *dto.CreateInventoryReq) error {
@@ -118,6 +121,50 @@ func (obj *inventory) GetInventories(ctx context.Context, req *dto.GetInventorie
 
 // LoadInventories 数据预热, 将物品数据从mysql中载入redis中, 为之后的高并发需求做准备
 func (obj *inventory) LoadInventories(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	maxWorks := INVENTORY_LOAD_WAXWORKS
+	wg := sync.WaitGroup{}
+	jobs := make(chan []*models.Inventory, maxWorks)
+	errChan := make(chan error, maxWorks)
+
+	// 启用协程, 将inventory数据载入到redis中
+	for i := 0; i < maxWorks; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for inventories := range jobs {
+				if err := obj.rdsRepo.Save(ctx, inventories); err != nil {
+					errChan <- err
+					return
+				}
+			}
+		}()
+	}
+
+	// 从mysql读取数据, 发送到jobs通道
+	offset := 1
+	for {
+		inventories, err := fetchInventories(db, offset, pageSize)
+		inventories, total, err := obj.repo.FindInventoryList(ctx)
+		if err != nil {
+			close(jobs)
+			return err
+		}
+		if len(inventories) == 0 {
+			break
+		}
+		jobs <- inventories
+		offset += pageSize
+	}
+	close(jobs)
+
+	wg.Wait()
+
+	select {
+	case err := <-errChan:
+		return err
+	default:
+		return nil
+	}
+
+	return nil
 }
