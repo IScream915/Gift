@@ -121,7 +121,7 @@ func (obj *inventory) GetInventories(ctx context.Context, req *dto.GetInventorie
 
 // LoadInventories 数据预热, 将物品数据从mysql中载入redis中, 为之后的高并发需求做准备
 func (obj *inventory) LoadInventories(ctx context.Context) error {
-	maxWorks := INVENTORY_LOAD_WAXWORKS
+	maxWorks := InventoryLoadWaxworks
 	wg := sync.WaitGroup{}
 	jobs := make(chan []*models.Inventory, maxWorks)
 	errChan := make(chan error, maxWorks)
@@ -143,17 +143,18 @@ func (obj *inventory) LoadInventories(ctx context.Context) error {
 	// 从mysql读取数据, 发送到jobs通道
 	offset := 1
 	for {
-		inventories, err := fetchInventories(db, offset, pageSize)
-		inventories, total, err := obj.repo.FindInventoryList(ctx)
+		inventories, _, err := obj.repo.FindInventoryList(ctx)
 		if err != nil {
 			close(jobs)
 			return err
 		}
+
 		if len(inventories) == 0 {
 			break
 		}
+
 		jobs <- inventories
-		offset += pageSize
+		offset += gormutil.DefaultPageSize
 	}
 	close(jobs)
 
@@ -165,6 +166,4 @@ func (obj *inventory) LoadInventories(ctx context.Context) error {
 	default:
 		return nil
 	}
-
-	return nil
 }
