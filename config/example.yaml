@@ -22,7 +22,7 @@ mysql: # In dbconfig.yaml:
 
 redis: # In redisconfig.yaml
   # Redis服务器地址列表
-  address:
+  address: addr:port
   # Redis身份验证的用户名（如果未使用，请留空）
   username: ''
   # Redis身份验证的密码
