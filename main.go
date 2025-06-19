@@ -77,9 +77,10 @@ func main() {
 	/////////////////////////////////////////// 业务逻辑初始化 ///////////////////////////////////////////////
 	// repo层初始化
 	inventoryRepo := repo.NewInventory(db)
+	inventoryRdsRepo := repo.NewInventoryRds(rds)
 
 	// service层初始化
-	inventorySvc := services.NewInventory(inventoryRepo)
+	inventorySvc := services.NewInventory(inventoryRepo, inventoryRdsRepo)
 
 	// api层初始化
 	inventoryApi := api.NewInventory(inventorySvc)

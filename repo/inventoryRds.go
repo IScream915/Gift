@@ -8,7 +8,7 @@ import (
 )
 
 type InventoryRds interface {
-	WriteToRedis(ctx context.Context, inventories []*models.Inventory) error
+	Save(ctx context.Context, inventories []*models.Inventory) error
 	Get(ctx context.Context, inventoryId uint64) error
 	Delete(ctx context.Context, inventoryId uint64) error
 }
@@ -23,7 +23,7 @@ type inventoryRds struct {
 	rdsClient redis.UniversalClient
 }
 
-func (obj *inventoryRds) WriteToRedis(ctx context.Context, inventories []*models.Inventory) error {
+func (obj *inventoryRds) Save(ctx context.Context, inventories []*models.Inventory) error {
 	pipe := obj.rdsClient.Pipeline()
 	for _, inventory := range inventories {
 		key := fmt.Sprintf("inventory:%d", inventory.ID)
