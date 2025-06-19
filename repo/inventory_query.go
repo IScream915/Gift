@@ -66,10 +66,10 @@ func (obj *inventory) FindInventoryList(ctx context.Context, opts ...InventoryQu
 	if option.desc != "" {
 		query = query.Where("description LIKE ?", "%"+option.desc+"%")
 	}
-	if option.price >= 0 {
+	if option.price > 0 {
 		query = query.Where("price = ?", option.price)
 	}
-	if option.count >= 0 {
+	if option.count > 0 {
 		query = query.Where("count = ?", option.count)
 	}
 
