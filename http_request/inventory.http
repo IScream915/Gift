@@ -1,0 +1,25 @@
+### POST 添加新的物品
+POST http://localhost:8080/v1/inventory/create
+Content-Type: application/json
+
+{
+  "name": "huawei",
+  "picture": "bbbb",
+  "price": 8299,
+  "count": 10
+}
+
+### POST 更新物品
+POST http://localhost:8080/v1/inventory/update
+Content-Type: application/json
+
+{
+  "id": 2,
+  "name": "huawei",
+  "picture": "bbbb",
+  "price": 8299,
+  "count": 15
+}
+
+### GET 获取物品
+GET http://localhost:8080/v1/inventory/get
