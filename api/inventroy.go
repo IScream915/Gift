@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"gift/dto"
 	"gift/pkg/response"
 	"gift/services"
@@ -91,6 +92,11 @@ func (obj *inventory) Get(c *gin.Context) {
 }
 
 func (obj *inventory) Load(c *gin.Context) {
-	//TODO implement me
-	panic("implement me")
+	total, err := obj.svc.LoadInventories(c)
+	if err != nil {
+		response.Json(c, response.WithErr(err))
+		return
+	}
+
+	response.Json(c, response.WithMsg(fmt.Sprintf("%d load inventory success", total)))
 }

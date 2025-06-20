@@ -16,7 +16,7 @@ type Inventory interface {
 	Update(ctx context.Context, req *dto.UpdateInventoryReq) error
 	Delete(ctx context.Context, req *dto.DeleteInventoryReq) error
 	GetInventories(ctx context.Context, req *dto.GetInventoriesReq) (*dto.GetInventoriesResp, error)
-	LoadInventories(ctx context.Context) error
+	LoadInventories(ctx context.Context) (uint64, error)
 }
 
 func NewInventory(repo repo.Inventory, rdsRepo repo.InventoryRds) Inventory {
@@ -120,7 +120,7 @@ func (obj *inventory) GetInventories(ctx context.Context, req *dto.GetInventorie
 }
 
 // LoadInventories 数据预热, 将物品数据从mysql中载入redis中, 为之后的高并发需求做准备
-func (obj *inventory) LoadInventories(ctx context.Context) error {
+func (obj *inventory) LoadInventories(ctx context.Context) (uint64, error) {
 	maxWorks := InventoryLoadWaxworks
 	wg := sync.WaitGroup{}
 	jobs := make(chan []*models.Inventory, maxWorks)
@@ -141,13 +141,19 @@ func (obj *inventory) LoadInventories(ctx context.Context) error {
 	}
 
 	// 从mysql读取数据, 发送到jobs通道
-	offset := 1
+	offset := 0
+	total := uint64(0)
 	for {
-		inventories, _, err := obj.repo.FindInventoryList(ctx)
+		inventories, temp, err := obj.repo.FindInventoryList(ctx,
+			repo.WithPagination(0, 0),
+			repo.WithOffset(offset),
+		)
 		if err != nil {
 			close(jobs)
-			return err
+			return 0, err
 		}
+
+		total += temp
 
 		if len(inventories) == 0 {
 			break
@@ -162,8 +168,8 @@ func (obj *inventory) LoadInventories(ctx context.Context) error {
 
 	select {
 	case err := <-errChan:
-		return err
+		return total, err
 	default:
-		return nil
+		return total, nil
 	}
 }

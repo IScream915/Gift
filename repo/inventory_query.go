@@ -8,10 +8,11 @@ import (
 
 type InventoryQueryOption struct {
 	gormutil.Option
-	name  string
-	desc  string
-	price uint64
-	count uint64
+	name   string
+	desc   string
+	price  uint64
+	count  uint64
+	offset int
 }
 
 type InventoryQueryFunc func(opt *InventoryQueryOption)
@@ -46,6 +47,12 @@ func WithPagination(page, pageSize int) InventoryQueryFunc {
 	}
 }
 
+func WithOffset(offset int) InventoryQueryFunc {
+	return func(opt *InventoryQueryOption) {
+		opt.offset = offset
+	}
+}
+
 func WithSort(sort string) InventoryQueryFunc {
 	return func(opt *InventoryQueryOption) {
 		opt.Sort = sort
@@ -57,6 +64,7 @@ func (obj *inventory) FindInventoryList(ctx context.Context, opts ...InventoryQu
 	for _, opt := range opts {
 		opt(&option)
 	}
+	flag := true
 
 	query := obj.client.WithContext(ctx).Table(models.TableNameInventories)
 
@@ -73,11 +81,19 @@ func (obj *inventory) FindInventoryList(ctx context.Context, opts ...InventoryQu
 		query = query.Where("count = ?", option.count)
 	}
 
-	// 分页和排序
-	query = option.PagingAndSort(query)
+	if option.offset >= 0 {
+		// 手动指定排序
+		query = query.Offset(option.offset).Limit(gormutil.DefaultPageSize)
+		flag = false
+	}
+
+	if flag {
+		// 自动指定, 分页和排序
+		query = option.PagingAndSort(query)
+	}
 
 	records := make([]*models.Inventory, 0)
-	if err := query.Find(&records).Error; err != nil {
+	if err := query.Find(&records).Debug().Error; err != nil {
 		return nil, 0, err
 	}
 
