@@ -89,5 +89,5 @@ func main() {
 	// 实例化gin引擎
 	engine := NewEngine(inventoryApi)
 	// 在本地8080端口开启服务
-	_ = engine.Run(":8080")
+	_ = engine.Run(":8000")
 }
