@@ -2,3 +2,4 @@
 .DS_store
 /config/dbconfig.yaml
 /config/redisconfig.yaml
+/config/kafkaconfig.yaml
