@@ -1,5 +1,5 @@
 ### POST 添加新的物品
-POST http://localhost:8080/v1/inventory/create
+POST http://localhost:8000/v1/inventory/create
 Content-Type: application/json
 
 {
@@ -10,7 +10,7 @@ Content-Type: application/json
 }
 
 ### POST 更新物品
-POST http://localhost:8080/v1/inventory/update
+POST http://localhost:8000/v1/inventory/update
 Content-Type: application/json
 
 {
@@ -22,7 +22,7 @@ Content-Type: application/json
 }
 
 ### GET 获取物品
-GET http://localhost:8080/v1/inventory/get
+GET http://localhost:8000/v1/inventory/get
 
 ### GET 秒杀预热
-GET http://localhost:8080/v1/inventory/load
+GET http://localhost:8000/v1/inventory/load
