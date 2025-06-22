@@ -1,5 +1,5 @@
 package kafka
 
 const (
-	DefaultKafkaConfigPath = "config/kafkaconfig.yaml"
+	DefaultConfigPath = "config/kafkaconfig.yaml"
 )
