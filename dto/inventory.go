@@ -43,3 +43,7 @@ type GetInventoriesResp struct {
 	InventoryList []*InventoryInfo `json:"inventory_list"`
 	Pagination    Pagination       `json:"pagination"`
 }
+
+type SecKillReq struct {
+	ID uint64 `json:"id" binding:"required"` // 物品ID
+}
