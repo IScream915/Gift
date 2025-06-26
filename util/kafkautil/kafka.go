@@ -1,23 +1,58 @@
-package kafka
+package kafkautil
 
 import (
 	"context"
 	"fmt"
 	"github.com/segmentio/kafka-go"
+	"github.com/spf13/viper"
+	"log"
 	"net"
 	"strconv"
 	"time"
 )
 
 var (
-	addr        = "198.19.249.172:9092"
+	addr   string
+	config = Config{}
+)
+
+var (
 	CacheReader *kafka.Reader
 	CacheWriter *kafka.Writer
-	topic       = "test-topic"
 	group       = "test-group"
 )
 
+type Config struct {
+	Address string `mapstructure:"address"`
+}
+
+func (c *Config) loadKafkaConfig() error {
+	configPath := DefaultConfigPath
+
+	// 使用 Viper 加载配置文件
+	viper.SetConfigFile(configPath)
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("读取配置文件失败: %v", err)
+	}
+	// 获取配置文件内容
+	if err := viper.Unmarshal(c); err != nil {
+		log.Fatalf("解析配置文件失败: %v", err)
+	}
+
+	addr = c.Address
+
+	return nil
+}
+
+// 测试与kafka的连接
 func dial() error {
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
 	conn, err := kafka.DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		return fmt.Errorf("dial error: %w", err)
@@ -32,7 +67,14 @@ func dial() error {
 	return nil
 }
 
-func createTopic() error {
+// 创建topic，并且限定topic仅有一个partition
+func createTopic(topic string) error {
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
 	conn, err := kafka.DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		return err
@@ -54,6 +96,12 @@ func createTopic() error {
 }
 
 func isThisBrokerController() (bool, error) {
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return false, err
+	}
+
 	// 1. 建立到某个 Broker（可能是任意节点）的连接
 	conn, err := kafka.DialContext(context.Background(), "tcp", addr)
 	if err != nil {
@@ -67,15 +115,24 @@ func isThisBrokerController() (bool, error) {
 		return false, fmt.Errorf("controller lookup error: %w", err)
 	}
 	// controller.Host, controller.Port, controller.ID 可用来定位 Controller 节点  [oai_citation:0‡pkg.go.dev](https://pkg.go.dev/gopkg.in/segmentio/kafka-go.v0)
+	fmt.Printf("Controller info: %+v\n", controller)
 
 	// 3. 获取当前连接的远程地址，并与 Controller 地址对比
 	remote := conn.RemoteAddr().String()
+	fmt.Println("Remote addr:", remote)
 
 	ctrlAddr := net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port))
 	return remote == ctrlAddr, nil
 }
 
 func listTopics() error {
+
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
 	conn, err := kafka.DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		fmt.Println("kafka connect failed", err)
@@ -95,7 +152,14 @@ func listTopics() error {
 	return nil
 }
 
-func listPartitions() error {
+func listPartitions(topic string) error {
+
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
 	conn, err := kafka.DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		fmt.Println("kafka connect failed", err)
@@ -114,7 +178,14 @@ func listPartitions() error {
 	return nil
 }
 
-func produceMessage() error {
+func produceMessage(topic string) error {
+
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
 	writer := kafka.Writer{
 		Addr:                   kafka.TCP(addr),
 		Topic:                  topic,
@@ -144,7 +215,14 @@ func produceMessage() error {
 	return nil
 }
 
-func consumeMessage() error {
+func consumeMessage(topic string) error {
+
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        []string{addr},
 		Topic:          topic,

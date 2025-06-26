@@ -1,4 +1,4 @@
-package kafka
+package kafkautil
 
 import (
 	"context"
@@ -15,7 +15,8 @@ func TestKafkaDial(t *testing.T) {
 }
 
 func TestCreateTopic(t *testing.T) {
-	if err := createTopic(); err != nil {
+	topic := "seckill"
+	if err := createTopic(topic); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -31,19 +32,22 @@ func TestListTopic(t *testing.T) {
 }
 
 func TestListPartition(t *testing.T) {
-	if err := listPartitions(); err != nil {
+	topic := "seckill"
+	if err := listPartitions(topic); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestProduceMessage(t *testing.T) {
-	if err := produceMessage(); err != nil {
+	topic := "seckill"
+	if err := produceMessage(topic); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConsumeMessage(t *testing.T) {
-	if err := consumeMessage(); err != nil {
+	topic := "seckill"
+	if err := consumeMessage(topic); err != nil {
 		t.Fatal(err)
 	}
 }
