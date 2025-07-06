@@ -176,6 +176,5 @@ func (obj *inventory) LoadInventories(ctx context.Context) (uint64, error) {
 }
 
 func (obj *inventory) SecKill(ctx context.Context, req *dto.SecKillReq) error {
-	//TODO implement me
-	panic("implement me")
+	return obj.rdsRepo.StockDeduct(ctx, 1)
 }
