@@ -7,6 +7,7 @@ import (
 	"gift/pkg/gormutil"
 	"gift/repo"
 	"gift/repo/models"
+	"gift/util/kafkautil"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -176,5 +177,15 @@ func (obj *inventory) LoadInventories(ctx context.Context) (uint64, error) {
 }
 
 func (obj *inventory) Seckill(ctx context.Context, req *dto.SecKillReq) error {
-	return obj.rdsRepo.StockDeduct(ctx, 1)
+	// 在redis中进行原子扣除
+	if err := obj.rdsRepo.StockDeduct(ctx, 1); err != nil {
+		return err
+	}
+
+	// 将mysql的的同步库存扣件传入kafka中
+	if err := kafkautil.InventoryDeduct(ctx, 1, 1); err != nil {
+		return err
+	}
+
+	return nil
 }
