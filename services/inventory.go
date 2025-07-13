@@ -17,7 +17,7 @@ type Inventory interface {
 	Delete(ctx context.Context, req *dto.DeleteInventoryReq) error
 	GetInventories(ctx context.Context, req *dto.GetInventoriesReq) (*dto.GetInventoriesResp, error)
 	LoadInventories(ctx context.Context) (uint64, error)
-	SecKill(ctx context.Context, req *dto.SecKillReq) error
+	Seckill(ctx context.Context, req *dto.SecKillReq) error
 }
 
 func NewInventory(repo repo.Inventory, rdsRepo repo.InventoryRds) Inventory {
@@ -175,6 +175,6 @@ func (obj *inventory) LoadInventories(ctx context.Context) (uint64, error) {
 	}
 }
 
-func (obj *inventory) SecKill(ctx context.Context, req *dto.SecKillReq) error {
+func (obj *inventory) Seckill(ctx context.Context, req *dto.SecKillReq) error {
 	return obj.rdsRepo.StockDeduct(ctx, 1)
 }

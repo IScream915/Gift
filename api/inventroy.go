@@ -14,6 +14,7 @@ type Inventory interface {
 	Delete(c *gin.Context)
 	Get(c *gin.Context)
 	Load(c *gin.Context)
+	Seckill(c *gin.Context)
 }
 
 func NewInventory(svc services.Inventory) Inventory {
@@ -99,4 +100,19 @@ func (obj *inventory) Load(c *gin.Context) {
 	}
 
 	response.Json(c, response.WithMsg(fmt.Sprintf("%d load inventory success", total)))
+}
+
+func (obj *inventory) Seckill(c *gin.Context) {
+	req := &dto.SecKillReq{}
+	if err := c.ShouldBindJSON(req); err != nil {
+		response.Json(c, response.WithErr(err))
+		return
+	}
+
+	if err := obj.svc.Seckill(c, req); err != nil {
+		response.Json(c, response.WithErr(err))
+		return
+	}
+
+	response.Json(c, response.WithMsg("seckill success"))
 }

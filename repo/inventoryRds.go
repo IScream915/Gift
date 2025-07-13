@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"gift/repo/models"
 	"github.com/redis/go-redis/v9"
@@ -79,7 +80,7 @@ func (obj *inventoryRds) StockDeduct(ctx context.Context, inventoryId uint64) er
 	remain := res.(int64)
 	// 当库存不够的时候remain为-1
 	if remain < 0 {
-		return fmt.Errorf("库存不足")
+		return errors.New("库存不足")
 	}
 	return nil
 }

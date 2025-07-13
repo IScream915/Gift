@@ -19,11 +19,12 @@ func SetRoute(router gin.IRouter, inventoryApi api.Inventory) {
 	{
 		inventoryNotLogin := v1.Group("/inventory")
 		{
-			inventoryNotLogin.POST("/create", inventoryApi.Create) // 增加新物品
-			inventoryNotLogin.POST("/update", inventoryApi.Update) // 更新物品信息
-			inventoryNotLogin.POST("/delete", inventoryApi.Delete) // 删除物品
-			inventoryNotLogin.GET("/get", inventoryApi.Get)        // 获取物品
-			inventoryNotLogin.GET("/load", inventoryApi.Load)      // 数据预热
+			inventoryNotLogin.POST("/create", inventoryApi.Create)   // 增加新物品
+			inventoryNotLogin.POST("/update", inventoryApi.Update)   // 更新物品信息
+			inventoryNotLogin.POST("/delete", inventoryApi.Delete)   // 删除物品
+			inventoryNotLogin.GET("/get", inventoryApi.Get)          // 获取物品
+			inventoryNotLogin.GET("/load", inventoryApi.Load)        // 数据预热
+			inventoryNotLogin.POST("/seckill", inventoryApi.Seckill) // 物品秒杀
 		}
 	}
 }

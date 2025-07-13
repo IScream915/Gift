@@ -3,10 +3,10 @@ POST http://localhost:8000/v1/inventory/create
 Content-Type: application/json
 
 {
-  "name": "huawei",
-  "picture": "bbbb",
-  "price": 8299,
-  "count": 10
+  "name": "macbook air",
+  "picture": "ccc",
+  "price": 12999,
+  "count": 3
 }
 
 ### POST 更新物品
@@ -14,11 +14,19 @@ POST http://localhost:8000/v1/inventory/update
 Content-Type: application/json
 
 {
-  "id": 2,
+  "id": 1,
   "name": "huawei",
-  "picture": "bbbb",
+  "picture": "aaaa",
   "price": 8299,
   "count": 15
+}
+
+### POST 物品秒杀
+POST http://localhost:8000/v1/inventory/seckill
+Content-Type: application/json
+
+{
+  "id": 1
 }
 
 ### GET 获取物品
@@ -26,3 +34,4 @@ GET http://localhost:8000/v1/inventory/get
 
 ### GET 秒杀预热
 GET http://localhost:8000/v1/inventory/load
+
