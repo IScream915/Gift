@@ -33,20 +33,26 @@ func TestListTopic(t *testing.T) {
 
 func TestListPartition(t *testing.T) {
 	topic := "seckill"
-	if err := listPartitions(topic); err != nil {
+	if err := listTopicPartitions(topic); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestProduceMessage(t *testing.T) {
-	topic := "seckill"
+	topic := "test-topic"
 	if err := produceMessage(topic); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConsumeMessage(t *testing.T) {
-	topic := "seckill"
+	go func() {
+		if err := listenSignal(); err != nil {
+			t.Error(err)
+			return
+		}
+	}()
+	topic := "test-topic"
 	if err := consumeMessage(topic); err != nil {
 		t.Fatal(err)
 	}

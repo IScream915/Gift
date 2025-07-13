@@ -2,24 +2,25 @@ package kafkautil
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 )
 
 var (
 	addr   string
 	config = Config{}
-)
-
-var (
-	CacheReader *kafka.Reader
-	CacheWriter *kafka.Writer
-	group       = "test-group"
+	reader *kafka.Reader
+	group  = "test-group"
+	topic  = "test-topic"
 )
 
 type Config struct {
@@ -75,6 +76,7 @@ func createTopic(topic string) error {
 		return err
 	}
 
+	// 连接到kafka服务端
 	conn, err := kafka.DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		return err
@@ -88,7 +90,7 @@ func createTopic(topic string) error {
 	}
 
 	// CreateTopics 仅在请求的 Broker 为 Controller 时才生效
-	if err := conn.CreateTopics(topicConfig); err != nil {
+	if err = conn.CreateTopics(topicConfig); err != nil {
 		return fmt.Errorf("create topic error: %w", err)
 	}
 	fmt.Println("✅ Topic 创建成功")
@@ -147,12 +149,13 @@ func listTopics() error {
 
 	for _, partition := range partitions {
 		fmt.Println(partition.Topic)
+		fmt.Println("partition:", partition.ID, "leader:", partition.Leader.Host, ":", partition.Leader.Port)
 	}
 
 	return nil
 }
 
-func listPartitions(topic string) error {
+func listTopicPartitions(topic string) error {
 
 	// 读入配置
 	if err := config.loadKafkaConfig(); err != nil {
@@ -179,7 +182,6 @@ func listPartitions(topic string) error {
 }
 
 func produceMessage(topic string) error {
-
 	// 读入配置
 	if err := config.loadKafkaConfig(); err != nil {
 		fmt.Println("load kafka config err: ", err)
@@ -202,8 +204,10 @@ func produceMessage(topic string) error {
 		Value: []byte("Hello Kafka-Go!"),
 	}
 
-	for i := 0; i < 100; i++ {
-		if err := writer.WriteMessages(context.Background(), msg); err != nil {
+	ctx := context.Background()
+
+	for i := 0; i < 20; i++ {
+		if err := writer.WriteMessages(ctx, msg); err != nil {
 			return fmt.Errorf("write message error: %w", err)
 		}
 
@@ -223,7 +227,7 @@ func consumeMessage(topic string) error {
 		return err
 	}
 
-	reader := kafka.NewReader(kafka.ReaderConfig{
+	reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        []string{addr},
 		Topic:          topic,
 		GroupID:        group,
@@ -242,4 +246,59 @@ func consumeMessage(topic string) error {
 		fmt.Printf("✅ 消费到消息: key=%s value=%s\n topic=%s partition=%d offset=%d\n",
 			string(m.Key), string(m.Value), m.Topic, m.Partition, m.Offset)
 	}
+}
+
+func listenSignal() error {
+	done := make(chan os.Signal)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+	s, ok := <-done
+	if !ok {
+		return errors.New("中止信道意外关闭")
+	}
+	fmt.Println("收到用户操作:", s.String())
+	// 判断reader是否存在
+	if reader != nil {
+		if err := reader.Close(); err != nil {
+			return err
+		}
+	}
+	defer os.Exit(0)
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func InitKafkaBroker() error {
+	return dial()
+}
+
+func InventoryDeduct(ctx context.Context, inventoryId, userId uint64) error {
+	// 读入配置
+	if err := config.loadKafkaConfig(); err != nil {
+		fmt.Println("load kafka config err: ", err)
+		return err
+	}
+
+	writer := kafka.Writer{
+		Addr:                   kafka.TCP(addr),
+		Topic:                  topic,
+		WriteTimeout:           1 * time.Second,
+		RequiredAcks:           kafka.RequireAll,
+		Async:                  true,
+		AllowAutoTopicCreation: false,
+	}
+
+	defer writer.Close()
+
+	msg := kafka.Message{
+		Key:   []byte(fmt.Sprintf("inventoryId:%d", inventoryId)),
+		Value: []byte(fmt.Sprintf("userId:%d", userId)),
+	}
+
+	if err := writer.WriteMessages(ctx, msg); err != nil {
+		return fmt.Errorf("write message error: %w", err)
+	}
+
+	fmt.Println("✅ 消息发送成功")
+	return nil
 }
