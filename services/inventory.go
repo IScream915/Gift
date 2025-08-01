@@ -178,12 +178,13 @@ func (obj *inventory) LoadInventories(ctx context.Context) (uint64, error) {
 
 func (obj *inventory) Seckill(ctx context.Context, req *dto.SecKillReq) error {
 	// 在redis中进行原子扣除
-	if err := obj.rdsRepo.StockDeduct(ctx, 1); err != nil {
+	if err := obj.rdsRepo.StockDeduct(ctx, req.ID); err != nil {
 		return err
 	}
 
-	// 将mysql的的同步库存扣件传入kafka中
-	if err := kafkautil.InventoryDeduct(ctx, 1, 1); err != nil {
+	// TODO: 从上下文或JWT中获取真实的userId，这里暂时使用固定值
+	// 将mysql的库存扣减同步传入kafka中异步处理
+	if err := kafkautil.InventoryDeduct(ctx, req.ID, req.UserID); err != nil {
 		return err
 	}
 
