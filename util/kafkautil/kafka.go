@@ -2,6 +2,7 @@ package kafkautil
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/segmentio/kafka-go"
@@ -22,6 +23,15 @@ var (
 	group  = "test-group"
 	topic  = "test-topic"
 )
+
+// SecKillMessage 秒杀消息结构
+type SecKillMessage struct {
+	InventoryId uint64 `json:"inventory_id"` // 商品ID
+	UserId      uint64 `json:"user_id"`      // 用户ID
+	Count       uint64 `json:"count"`        // 购买数量
+	OrderId     string `json:"order_id"`     // 订单ID（用于幂等性）
+	CreateTime  int64  `json:"create_time"`  // 创建时间戳
+}
 
 type Config struct {
 	Address string `mapstructure:"address"`
@@ -273,6 +283,11 @@ func InitKafkaBroker() error {
 }
 
 func InventoryDeduct(ctx context.Context, inventoryId, userId uint64) error {
+	return InventoryDeductWithOrder(ctx, inventoryId, userId, 1, "")
+}
+
+// InventoryDeductWithOrder 库存扣减消息发送（支持订单信息）
+func InventoryDeductWithOrder(ctx context.Context, inventoryId, userId, count uint64, orderId string) error {
 	// 读入配置
 	if err := config.loadKafkaConfig(); err != nil {
 		fmt.Println("load kafka config err: ", err)
@@ -282,23 +297,43 @@ func InventoryDeduct(ctx context.Context, inventoryId, userId uint64) error {
 	writer := kafka.Writer{
 		Addr:                   kafka.TCP(addr),
 		Topic:                  topic,
-		WriteTimeout:           1 * time.Second,
+		WriteTimeout:           3 * time.Second,
 		RequiredAcks:           kafka.RequireAll,
-		Async:                  true,
+		Async:                  false, // 改为同步，确保消息发送成功
 		AllowAutoTopicCreation: false,
 	}
 
 	defer writer.Close()
 
+	// 生成订单ID（如果没有提供）
+	if orderId == "" {
+		orderId = fmt.Sprintf("order_%d_%d_%d", inventoryId, userId, time.Now().UnixNano())
+	}
+
+	// 构造秒杀消息
+	seckillMsg := SecKillMessage{
+		InventoryId: inventoryId,
+		UserId:      userId,
+		Count:       count,
+		OrderId:     orderId,
+		CreateTime:  time.Now().Unix(),
+	}
+
+	// 序列化消息
+	msgBytes, err := json.Marshal(seckillMsg)
+	if err != nil {
+		return fmt.Errorf("marshal message error: %w", err)
+	}
+
 	msg := kafka.Message{
-		Key:   []byte(fmt.Sprintf("inventoryId:%d", inventoryId)),
-		Value: []byte(fmt.Sprintf("userId:%d", userId)),
+		Key:   []byte(orderId), // 使用订单ID作为key，保证同一订单的消息有序
+		Value: msgBytes,
 	}
 
 	if err := writer.WriteMessages(ctx, msg); err != nil {
 		return fmt.Errorf("write message error: %w", err)
 	}
 
-	fmt.Println("✅ 消息发送成功")
+	fmt.Println("✅ 秒杀消息发送成功, orderId:", orderId)
 	return nil
 }
