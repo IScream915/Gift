@@ -45,5 +45,6 @@ type GetInventoriesResp struct {
 }
 
 type SecKillReq struct {
-	ID uint64 `json:"id" binding:"required"` // 物品ID
+	ID     uint64 `json:"id" binding:"required"`      // 物品ID
+	UserID uint64 `json:"user_id" binding:"required"` // 用户ID
 }
